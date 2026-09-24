@@ -55,7 +55,10 @@ export const URL_TYPE_LABELS: Record<string, string> = {
   regular: 'Regular HTTP',
   zeronet: 'ZeroNet',
   ipfs: 'IPFS',
+  acestream: 'AceStream Search',
 };
+
+export const ACESTREAM_SEARCH_DEFAULT_URL = 'acestream-search://catalog';
 
 /**
  * The backend stores the outcome of the last scrape as a free-form status string
@@ -164,6 +167,13 @@ const Scraper: React.FC = () => {
   const handleSelectChange = (e: SelectChangeEvent<string>) => {
     const name = e.target.name as keyof URLFormData;
     const value = e.target.value;
+
+    // AceStream catalogue sources are addressed with a pseudo-URL rather than a
+    // website; prefill it so the field is never left blank by accident.
+    if (name === 'url_type' && value === 'acestream' && !formData.url) {
+      setFormData({ ...formData, url_type: value, url: ACESTREAM_SEARCH_DEFAULT_URL });
+      return;
+    }
 
     setFormData({
       ...formData,
@@ -456,6 +466,7 @@ const Scraper: React.FC = () => {
               <MenuItem value="regular">Regular HTTP</MenuItem>
               <MenuItem value="zeronet">ZeroNet</MenuItem>
               <MenuItem value="ipfs">IPFS</MenuItem>
+              <MenuItem value="acestream">AceStream Search</MenuItem>
             </Select>
           </FormControl>
           <FormControl fullWidth>

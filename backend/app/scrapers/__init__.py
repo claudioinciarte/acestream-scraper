@@ -4,8 +4,9 @@ Scraper factory module
 from typing import Optional
 
 from app.config.settings import settings
-from app.models.url_types import create_url_object, IpfsURL, ZeronetURL, RegularURL, BaseURL
+from app.models.url_types import create_url_object, AceStreamURL, IpfsURL, ZeronetURL, RegularURL, BaseURL
 from app.scrapers.base import BaseScraper
+from app.scrapers.acestream import AceStreamSearchScraper
 from app.scrapers.http import HTTPScraper
 from app.scrapers.ipfs import IpfsScraper
 from app.scrapers.zeronet import ZeronetScraper
@@ -26,7 +27,11 @@ def create_scraper_for_url(url: str, url_type: str, timeout: Optional[int] = Non
     """
     url_obj = create_url_object(url, url_type)
 
-    if isinstance(url_obj, ZeronetURL):
+    if isinstance(url_obj, AceStreamURL):
+        timeout = timeout or 20
+        retries = retries or 2
+        return AceStreamSearchScraper(url_obj, timeout=timeout, retries=retries)
+    elif isinstance(url_obj, ZeronetURL):
         timeout = timeout or 20
         retries = retries or 5
         return ZeronetScraper(url_obj, timeout=timeout, retries=retries)
@@ -42,4 +47,4 @@ def create_scraper_for_url(url: str, url_type: str, timeout: Optional[int] = Non
         raise ValueError(f"Unsupported URL type: {url_obj.__class__.__name__}")
 
 
-__all__ = ['create_scraper_for_url', 'BaseScraper', 'HTTPScraper', 'IpfsScraper', 'ZeronetScraper']
+__all__ = ['create_scraper_for_url', 'BaseScraper', 'AceStreamSearchScraper', 'HTTPScraper', 'IpfsScraper', 'ZeronetScraper']

@@ -78,6 +78,11 @@ class Settings(BaseSettings):
     CORS_ORIGINS: Annotated[List[str], NoDecode] = ["http://localhost:3000"]
     FRONTEND_BUILD_PATH: str = "frontend_build"
     ACE_ENGINE_URL: str = ""
+    # Optional AceStream account used to renew the engine session for catalogue
+    # (``acestream-search://``) sources when it has expired. Empty = rely on the
+    # engine's existing session.
+    ACESTREAM_EMAIL: str = ""
+    ACESTREAM_PASSWORD: str = ""
     # Explicit probe route; an unavailable checker must never fall back to playback.
     ACE_CHECK_ENGINE_URL: str = ""
 

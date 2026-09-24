@@ -159,10 +159,22 @@ class EngineClient:
             return session
 
     def _start_direct(self, content_id: str, pid: str, lease: PlaybackLease) -> EngineSession:
-        body = self._get_json(
-            f"{self.engine_url}/ace/getstream",
-            params={"id": content_id, "pid": pid, "format": "json"},
-        )
+        try:
+            body = self._get_json(
+                f"{self.engine_url}/ace/getstream",
+                params={"id": content_id, "pid": pid, "format": "json"},
+            )
+        except EngineRefusedError:
+            # Some content is only addressable by its raw infohash. Passing
+            # ``infohash`` starts the torrent directly and skips the
+            # server-side descriptor path, which refuses licensed catalogue
+            # content when the client cannot attest. Community content ids
+            # keep working through ``id``; try the other parameter before
+            # surfacing the failure.
+            body = self._get_json(
+                f"{self.engine_url}/ace/getstream",
+                params={"infohash": content_id, "pid": pid, "format": "json"},
+            )
         try:
             return EngineSession(
                 content_id=content_id,

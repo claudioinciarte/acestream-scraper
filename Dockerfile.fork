@@ -1,0 +1,18 @@
+# Local fork overlay.
+#
+# Adds the AceStream catalogue source (acestream-search://) on top of the
+# published scraper-only image. No bundled engine/Acexy is included: the app
+# talks to the external AceStream engine through ACE_ENGINE_URL.
+FROM pipepito/acestream-scraper:scraper
+
+# Changed backend modules (new source type + scraper + optional credentials).
+COPY backend/app/models/url_types.py /app/app/models/url_types.py
+COPY backend/app/scrapers/__init__.py /app/app/scrapers/__init__.py
+COPY backend/app/scrapers/acestream.py /app/app/scrapers/acestream.py
+COPY backend/app/config/settings.py /app/app/config/settings.py
+# Playback/status fallback to the raw-infohash engine parameter.
+COPY backend/app/services/engine_client.py /app/app/services/engine_client.py
+COPY backend/app/services/channel_status_service.py /app/app/services/channel_status_service.py
+
+# Rebuilt SPA with the new "AceStream Search" source type in the Scraper form.
+COPY backend/frontend_build/ /app/frontend_build/

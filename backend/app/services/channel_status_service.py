@@ -257,6 +257,14 @@ class ChannelStatusService:
                 if self._in_use(channel.id):
                     return self._skipped_result(channel)
                 http_status, data, parse_error = await self._fetch_engine_response(status_url, params, timeout * 2)
+            # The engine addresses content either by content id or by raw
+            # infohash; a mismatch comes back as an error with no response.
+            # Retry once with the other parameter before judging the channel.
+            if isinstance(data, dict) and data.get('error') and not isinstance(data.get('response'), dict):
+                alt = 'infohash' if identifier == 'id' else 'id'
+                http_status, data, parse_error = await self._fetch_engine_response(
+                    status_url, {alt: channel.id, 'format': 'json', 'pid': uuid4().hex}, timeout
+                )
             if isinstance(data, dict):
                 error_text = str(data.get('error') or '').strip().lower()
                 if error_text in {'not found', 'content not found', 'content id not found', 'unknown content id'}:

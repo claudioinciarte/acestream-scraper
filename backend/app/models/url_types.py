@@ -199,6 +199,34 @@ class IpfsURL(BaseURL):
         return False
 
 
+class AceStreamURL(BaseURL):
+    """Pseudo-URL for the AceStream engine's built-in content catalogue.
+
+    The engine exposes its signed-in catalogue through ``/search``. There is no
+    web page to fetch, so the source is addressed with a self-describing
+    pseudo-URL and the scraper talks to the configured engine instead:
+
+        acestream-search://catalog
+        acestream-search://catalog?category=sport
+        acestream-search://catalog?query=laliga
+    """
+
+    SCHEME = "acestream-search"
+
+    def _validate(self) -> None:
+        if self.skip_validation:
+            return
+        if not self.is_valid_url(self.original_url):
+            raise ValueError(f"Invalid AceStream search URL: {self.original_url}")
+
+    def get_normalized_url(self) -> str:
+        return self.original_url
+
+    @staticmethod
+    def is_valid_url(url: str) -> bool:
+        return url.startswith(f"{AceStreamURL.SCHEME}://")
+
+
 class RegularURL(BaseURL):
     """URL type for regular HTTP/HTTPS URLs"""
     
@@ -247,6 +275,9 @@ def create_url_object(url: str, url_type: str = 'auto') -> BaseURL:
     if url_type == 'regular':
         # For explicit regular URLs, skip validation to allow non-standard URLs
         return RegularURL(url, skip_validation=True)
+    elif url_type == 'acestream':
+        # Engine catalogue pseudo-URL; the scraper resolves the engine itself.
+        return AceStreamURL(url, skip_validation=True)
     elif url_type == 'zeronet':
         # For explicit ZeroNet URLs, skip validation as user has specified the type
         return ZeronetURL(url, skip_validation=True)
@@ -257,6 +288,9 @@ def create_url_object(url: str, url_type: str = 'auto') -> BaseURL:
         raise ValueError(f"Unsupported URL type: {url_type}")
     
     # For auto detection, try to determine the type
+    if AceStreamURL.is_valid_url(url):
+        return AceStreamURL(url)
+
     if url.startswith(('ipfs://', 'ipns://')) or IpfsURL.browser_gateway_native_url(url):
         # Native addresses and browser-only gateways need the local gateway.
         # Other HTTP gateways retain their existing direct-fetch behavior.

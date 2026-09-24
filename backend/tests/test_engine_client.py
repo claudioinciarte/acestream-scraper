@@ -56,6 +56,30 @@ def test_engine_error_is_refused(message):
         EngineClient("http://engine:6878", client=_client(handler)).start(CID)
 
 
+def test_start_falls_back_to_infohash_when_id_is_refused():
+    """Catalogue content is addressed by raw infohash: the engine refuses the
+    ``id`` form (server-side descriptor path needs attestation) but starts the
+    torrent when the same value is sent as ``infohash``."""
+    seen = []
+
+    def handler(request):
+        seen.append(str(request.url))
+        if request.url.params.get("id"):
+            return httpx.Response(200, json={"response": None, "error": "failed to load content"})
+        return httpx.Response(200, json={"response": {
+            "playback_url": "http://engine:6878/ace/r/%s/tok" % IH,
+            "stat_url": "http://engine:6878/ace/stat/%s/s1" % IH,
+            "command_url": "http://engine:6878/ace/cmd/%s/s1" % IH,
+            "is_live": 1, "playback_session_id": "s1"}, "error": None})
+
+    session = EngineClient("http://engine:6878", client=_client(handler)).start(CID, pid="p1")
+    assert seen == [
+        f"http://engine:6878/ace/getstream?id={CID}&pid=p1&format=json",
+        f"http://engine:6878/ace/getstream?infohash={CID}&pid=p1&format=json",
+    ]
+    assert session.playback_url == f"http://engine:6878/ace/r/{IH}/tok"
+
+
 @pytest.mark.parametrize("make", [lambda r: httpx.Response(500, text="boom"), lambda r: (_ for _ in ()).throw(httpx.ConnectError("down"))])
 def test_transport_failures_are_unavailable(make):
     with pytest.raises(EngineUnavailableError):
