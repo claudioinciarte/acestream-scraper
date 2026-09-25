@@ -21,6 +21,10 @@ The manual release job mirrors `wiki/` to the GitHub wiki after successful lates
 
 - `AGENTS.md`: repository-wide Codex instructions, with layered backend, frontend,
   and E2E guidance.
+- [Architecture](Architecture.md): current component boundaries, runtime topology,
+  data flows, trust boundaries, and extension points.
+- [Design system](Design-System.md): semantic tokens, layout, responsive behavior,
+  shared UI patterns, accessibility, and contribution rules.
 - `docs/architecture/deployment.md`: production and local deployment model for `backend/` + `frontend/`.
 - `docs/ops/jenkins-ci.md`: primary Jenkins CI/CD operator guide, cutover steps, and rollback guidance.
 - `docs/ops/codex-infrastructure-access.md`: safe Codex access to the local,
